@@ -1,6 +1,4 @@
-* Seteo de lenguajes
-#+BEGIN_SRC emacs-lisp
- ;;; languajes.el --- Archivo de carga de los distintos lenguajes que uso -*- lexical-binding: t -*-
+;;; languajes.el --- Archivo de carga de los distintos lenguajes que uso -*- lexical-binding: t -*-
 
   ;; Autor: Carlos Schwarz
   ;; Mantenimiento: Carlos Schwarz
@@ -158,8 +156,3 @@
     :config
     ;; Define el path de Flutter (ajusta según tu sistema)
     (setq dart-sdk-path "/home/Charly/fvm/versions/3.19.6/bin/cache/dart-sdk"))
-
-
-
-
-#+END_SRC

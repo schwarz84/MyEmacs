@@ -1,7 +1,4 @@
-
-* Seteo de paquetes para el editor
-  #+BEGIN_SRC emacs-lisp
-   ;;; packages.el --- Archivo de carga de los paquetes de Emacs -*- lexical-binding: t -*-
+;;; packages.el --- Archivo de carga de los paquetes de Emacs -*- lexical-binding: t -*-
 
    ;; Autor: Carlos Schwarz
    ;; Mantenimiento: Carlos Schwarz
@@ -581,34 +578,34 @@
   (setq company-minimum-prefix-length 1
         company-idle-delay 0))
 
-    ;; (use-package lsp-mode
-    ;;   :init
-    ;;   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-    ;;   (setq lsp-keymap-prefix "C-l")
-    ;;   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-    ;;         ; (XXX-mode . lsp)
-    ;;          ;; if you want which-key integration
-    ;;          (lsp-mode . lsp-enable-which-key-integration))
-    ;;   :commands lsp)
+    (use-package lsp-mode
+      :init
+      ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+      (setq lsp-keymap-prefix "C-l")
+      :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+            ; (XXX-mode . lsp)
+             ;; if you want which-key integration
+             (lsp-mode . lsp-enable-which-key-integration))
+      :commands lsp)
 
-    ;; ;; optionally
-    ;; (use-package lsp-ui :commands lsp-ui-mode)
-    ;; ;; if you are helm user
-    ;; (use-package helm-lsp :commands helm-lsp-workspace-symbol)
-    ;; ;; if you are ivy user
-    ;; (use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
-    ;; (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
+    ;; optionally
+    (use-package lsp-ui :commands lsp-ui-mode)
+    ;; if you are helm user
+    (use-package helm-lsp :commands helm-lsp-workspace-symbol)
+    ;; if you are ivy user
+    (use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
+    (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
 
-    ;; ;;Java
-    ;; (use-package lsp-java :config (add-hook 'java-mode-hook 'lsp))
-    ;; (use-package dap-mode :after lsp-mode :config (dap-auto-configure-mode))
-    ;; (use-package dap-java :ensure nil)
-    ;; (use-package lsp-mode :hook ((lsp-mode . lsp-enable-which-key-integration)))
+    ;;Java
+    (use-package lsp-java :config (add-hook 'java-mode-hook 'lsp))
+    (use-package dap-mode :after lsp-mode :config (dap-auto-configure-mode))
+    (use-package dap-java :ensure nil)
+    (use-package lsp-mode :hook ((lsp-mode . lsp-enable-which-key-integration)))
 
-    ;; (use-package helm-lsp)
-    ;; (use-package helm
-    ;;   :config (helm-mode))
-    ;; (use-package lsp-treemacs)
+    (use-package helm-lsp)
+    (use-package helm
+      :config (helm-mode))
+    (use-package lsp-treemacs)
 
     ;; optionally if you want to use debugger
     (use-package dap-mode)
@@ -652,6 +649,3 @@
         (define-key company-active-map (kbd "<tab>") 'company-complete-common-or-cycle)
         (define-key company-active-map (kbd "C-n") 'company-select-next)
         (define-key company-active-map (kbd "C-p") 'company-select-previous))
-
-
-      #+END_SRC

@@ -1,6 +1,4 @@
-* Seteo de configuracion
-  #+BEGIN_SRC emacs-lisp
-    ;;; interface.el --- Archivo de carga de tema e interfaz y thema de Emacs -*- lexical-binding: t -*-
+;;; interface.el --- Archivo de carga de tema e interfaz y thema de Emacs -*- lexical-binding: t -*-
 
     ;; Autor: Carlos Schwarz
     ;; Mantenimiento: Carlos Schwarz
@@ -254,6 +252,3 @@
 ;;   :ensure t
 ;;   :config
 ;;   (dashboard-setup-startup-hook))
-        
-      
-    #+END_SRC
