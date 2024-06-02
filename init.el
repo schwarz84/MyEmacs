@@ -93,7 +93,8 @@
 (dolist (file '("~/.emacs.d/config/packages.org"
                 "~/.emacs.d/config/ui_theme.org"
                 "~/.emacs.d/config/keys_and_functions.org"
-                "~/.emacs.d/config/languages.org"))
+                "~/.emacs.d/config/languages.org"
+                ))
   (when (file-exists-p (expand-file-name file))
     (org-babel-load-file (expand-file-name file))))
 

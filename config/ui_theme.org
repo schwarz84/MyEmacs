@@ -108,6 +108,12 @@
       (global-ligature-mode t))
     
     (set-frame-font "CaskaydiaCove Nerd Font" t)
+
+    ;; Instalar y cargar el tema Jazz
+    (use-package jazz-theme
+      :ensure t
+      :config
+      (load-theme 'jazz t))
     
     (whitespace-mode t)
     (global-whitespace-newline-mode t)
@@ -118,17 +124,26 @@
     
     (setq whitespace-style '(face trailing tabs spaces newline missing-newline-at-eof empty indentation space-after-tab space-before-tab space-mark tab-mark newline-mark))
     
+    ;; Configurar las caras de whitespace para que siempre se vean blancos
+    (custom-set-faces
+     '(whitespace-space ((t (:background nil :foreground "white"))))
+     '(whitespace-hspace ((t (:background nil :foreground "white"))))
+     '(whitespace-tab ((t (:background nil :foreground "white"))))
+     '(whitespace-newline ((t (:background nil :foreground "white"))))
+     '(whitespace-trailing ((t (:background nil :foreground "white"))))
+     '(whitespace-line ((t (:background nil :foreground "white"))))
+     '(whitespace-space-before-tab ((t (:background nil :foreground "white"))))
+     '(whitespace-indentation ((t (:background nil :foreground "white"))))
+     '(whitespace-empty ((t (:background nil :foreground "white"))))
+     '(whitespace-space-after-tab ((t (:background nil :foreground "white")))))
+    
+
+
     (defun my-compilation-mode-hook ()
       (setq truncate-lines nil) ;; becomes buffer local
       (set (make-local-variable 'truncate-partial-width-windows) nil))
     (add-hook 'compilation-mode-hook 'my-compilation-mode-hook)
-    
-    ;; Instalar y cargar el tema Jazz
-    (use-package jazz-theme
-      :ensure t
-      :config
-      (load-theme 'jazz t))
-    
+       
     ;; Modeline de Doom
     (use-package doom-modeline
       :ensure t
@@ -166,8 +181,10 @@
     (setq inhibit-startup-echo-area-message t)
     (setq initial-major-mode 'lisp-interaction-mode)
     (setq initial-scratch-message nil)
+
+    (delete-selection-mode 1)
         
-    (provide 'interface)
+    (provide 'ui_theme)
     ;;; ui_theme.el ends here
   
   #+END_SRC

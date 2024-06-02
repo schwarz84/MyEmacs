@@ -83,7 +83,7 @@
     ;; Para mostrar todas las opciones en columnas.
     (use-package counsel
       :bind (("M-x" . counsel-M-x)
-             ("C-x b" . counsel-ibuffer)
+             ("C-x b" . counsel-projectile-switch-to-buffer)
              ("C-x C-f" . counsel-find-file)
              ("M-y" . counsel-yank-pop)
              :map minibuffer-local-map
@@ -278,7 +278,8 @@
     (use-package neotree
       :config
       (setq neo-theme 'arrow)
-      (setq neo-smart-open t))
+      (setq neo-smart-open t)
+      )
     
     (defun neotree-projectile-action ()
       "Abrir Neotree utilizando la raíz del proyecto con projectile."
@@ -395,11 +396,21 @@
       (add-to-list 'company-backends 'company-web-slim)
       (add-to-list 'company-backends 'company-css)
       (define-key company-active-map [tab] 'company-complete-common-or-cycle)
-      (define-key company-active-map (kbd "TAB") 'company-complete-common-or-cycle)
-      (define-key company-active-map (kbd "<tab>") 'company-complete-common-or-cycle)
+      (define-key company-active-map (kbd "TAB") 'company-complete-selection)
+      (define-key company-active-map (kbd "<tab>") 'company-complete-selection)
       (define-key company-active-map (kbd "C-n") 'company-select-next)
       (define-key company-active-map (kbd "C-p") 'company-select-previous))
-    
+
+    ;; Instalar y configurar exec-path-from-shell
+    (use-package exec-path-from-shell
+      :ensure t
+      :config
+      ;; Asegúrate de que Emacs cargue las variables de entorno de la shell
+      (when (memq window-system '(mac ns x))
+        (exec-path-from-shell-initialize)
+        ;; Carga variables específicas del archivo .bashrc
+        (exec-path-from-shell-copy-envs '("PATH" "ANDROID_HOME" "ANDROID_SDK_ROOT" "CHROME_EXECUTABLE"))))  
+        
     (provide 'packages)
     ;;; packages.el ends here
  
