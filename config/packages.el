@@ -80,8 +80,8 @@
 ;; Para mostrar todas las opciones en columnas.
 (use-package counsel
   :bind (("M-x" . counsel-M-x)
-         ("C-x b" . counsel-projectile-switch-to-buffer)
-         ("C-x C-f" . counsel-find-file)
+         ;("C-x b" . counsel-projectile-switch-to-buffer)
+         ("C-x C-f" . counsel-find-file)  
          ("M-y" . counsel-yank-pop)
          :map minibuffer-local-map
          ("C-r" . counsel-minibuffer-history)))
@@ -158,7 +158,13 @@
 
 ;; Comentar líneas completas o seleccionadas.
 (use-package evil-nerd-commenter
-  :bind ("M-/" . evilnc-comment-or-uncomment-lines))
+  :bind ("M-/" . my/comment-and-move-down))
+
+(defun my/comment-and-move-down ()
+  "Commentar linea"
+  (interactive)
+  (evilnc-comment-or-uncomment-lines 1)
+  (next-line 1))
 
 ;; Resaltar pares de paréntesis, corchetes o llaves.
 (use-package paren
@@ -176,10 +182,13 @@
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
 
-;; Manejo de deshacer con árbol.
+;; Instalar y configurar undo-tree
 (use-package undo-tree
+  :ensure t
   :init
-  (global-undo-tree-mode))
+  (global-undo-tree-mode)
+  :bind (("C-z" . undo-tree-undo)       ; Ctrl + z para deshacer
+         ("C-S-z" . undo-tree-redo)))   ; Ctrl + Shift + z para rehacer
 
 ;; Borrar espacios en blanco.
 (use-package hungry-delete
@@ -271,19 +280,86 @@ is already narrowed."
 ;; Atajo para invalidar el caché de projectile manualmente
 (global-set-key (kbd "C-c p I") 'projectile-invalidate-cache-on-project-path-change)
 
-;; Configuración de neotree
+(define-key projectile-mode-map (kbd "C-c u") 'helm-projectile)    
+
+;; Configuración de helm
+(use-package helm
+  :config
+  (setq helm-display-buffer-height 45 ;; Ajusta el tamaño del buffer de Helm (25% de la altura del frame)
+        helm-autoresize-min-height 45 ;; Tamaño mínimo del buffer de Helm
+        helm-autoresize-max-height 45 ;; Tamaño máximo del buffer de Helm
+        helm-split-window-inside-p t  ;; Para abrir Helm en una ventana vertical
+        helm-split-window-default-side 'below) ;; Opción para ventana vertical
+  (helm-autoresize-mode 1)
+  (helm-mode 1))
+
+(use-package helm-projectile
+  :config
+  (helm-projectile-on)
+  :bind (("C-x b" . helm-projectile-switch-to-buffer)))
+
+;; Configuración de helm-rg
+(use-package helm-rg
+  :ensure t
+  :config
+  (setq helm-rg-default-extra-args "--hidden"))
+
+(use-package helm-ls-git
+  :ensure t
+  :commands (helm-ls-git-ls))  
+
+;; Configura un atajo de teclado para abrir helm-ls-git
+(global-set-key (kbd "C-x C-g") 'helm-ls-git-ls)  
+
+;; Función para buscar en todo el proyecto usando ripgrep y mostrar vista previa
+(defun my/helm-projectile-rg-with-preview ()
+  "Buscar en todo el proyecto usando ripgrep y mostrar la vista previa."
+  (interactive)
+  (let ((default-directory (projectile-project-root)))
+    (helm-rg (read-string "Buscar: ") (projectile-project-root))))
+
+;; Atajo de teclado para la función de búsqueda con vista previa
+(global-set-key (kbd "C-c y") 'my/helm-projectile-rg-with-preview)
+
+;; Función para ignorar buffers no deseados en helm-projectile
+(defun my/helm-projectile-ignore-buffer (buffer)
+  "Ignora buffers que no pertenecen al proyecto actual."
+  (let ((bufname (buffer-name buffer)))
+    (or (string-match-p "^\\*" bufname) ;; Ignorar buffers internos de Emacs
+        (string-match-p "^magit" bufname) ;; Ignorar buffers de Magit
+        (string-match-p "^LSP" bufname))))
+
+(setq helm-boring-buffer-regexp-list '("\\*.*\\*" "magit.*" "LSP.*"))
+
+;; Asegúrate de tener instalados los paquetes necesarios
+(use-package all-the-icons)
 (use-package neotree
   :config
-  (setq neo-theme 'arrow)
+  (setq neo-theme 'icons)
   (setq neo-smart-open t)
-  )
+  (setq neo-vc-integration '(face))  ;; Agrega esta línea para resaltar archivos modificados
+  (global-set-key (kbd "C-M-1") 'neotree-find))
+
+(defun neotree-find-current-file ()
+  "Abre Neotree y selecciona el archivo actual."
+  (interactive)
+  (let ((current-file (buffer-file-name)))
+    (neotree-find current-file)))
+
+;; Asigna la función a la tecla C-M-1
+(global-set-key (kbd "C-M-1") 'neotree-find-current-file)
 
 (defun neotree-projectile-action ()
   "Abrir Neotree utilizando la raíz del proyecto con projectile."
   (interactive)
-  (let ((project-root (projectile-project-root)))
-    (if project-root
-        (neotree-dir project-root)
+    (let ((project-dir (projectile-project-root))
+          (file-name (buffer-file-name)))
+      (neotree-toggle)
+      (if project-dir
+          (if (neo-global--window-exists-p)
+              (progn
+                (neotree-dir project-dir)
+                (neotree-find file-name)))
       (message "No estás en un proyecto reconocido por Projectile."))))
 
 (global-set-key (kbd "M-1") 'neotree-projectile-action)
@@ -292,6 +368,14 @@ is already narrowed."
           (lambda ()
             (define-key neotree-mode-map (kbd "M-1") 'neotree-hide)
             (setq-local neo-buffer--unlock-width nil)))
+
+;; Añade los iconos de all-the-icons para Neotree
+(use-package all-the-icons
+  :if (display-graphic-p))
+
+;; Instalación de los iconos (solo es necesario hacer esto una vez)
+;; (all-the-icons-install-fonts)
+
 
 ;; Configuración de backups y undo history.
 (defvar --backup-directory (concat user-emacs-directory "backups"))
@@ -371,8 +455,9 @@ is already narrowed."
 (use-package company
   :hook (after-init . global-company-mode)
   :config
-  (setq company-minimum-prefix-length 1
-        company-idle-delay 0))
+  (setq company-minimum-prefix-length 0
+        company-idle-delay 0
+        company-selection-wrap-around t))
 
 ;; Configuración adicional de Company.
 (use-package company
@@ -396,7 +481,32 @@ is already narrowed."
   (define-key company-active-map (kbd "TAB") 'company-complete-selection)
   (define-key company-active-map (kbd "<tab>") 'company-complete-selection)
   (define-key company-active-map (kbd "C-n") 'company-select-next)
-  (define-key company-active-map (kbd "C-p") 'company-select-previous))
+  (define-key company-active-map (kbd "C-p") 'company-select-previous))    
+
+(setq lsp-completion-provider :capf)  ;; Usar company-capf para la autocompletación
+
+;; Hook para esconder las sugerencias al perder el foco
+(add-hook 'focus-out-hook 'company-abort)
+
+;; Función para esconder las sugerencias con Escape
+(defun my/company-hide-suggestions ()
+  (interactive)
+  (company-abort))
+
+;; Mapea la tecla Escape para esconder las sugerencias
+(define-key company-active-map (kbd "<escape>") 'my/company-hide-suggestions)
+
+;; Mapea la tecla Enter para no seleccionar ninguna sugerencia
+(define-key company-active-map (kbd "RET") nil)
+(define-key company-active-map (kbd "<return>") nil)
+(define-key company-active-map (kbd "M-RET") 'company-complete-selection)  ;; Si quieres, puedes usar M-RET para seleccionar una sugerencia)
+
+
+
+;; Personalizar el menú de autocompletado para que sea más amigable
+(use-package company-box
+  :hook (company-mode . company-box-mode)
+  :ensure t)  
 
 ;; Instalar y configurar exec-path-from-shell
 (use-package exec-path-from-shell

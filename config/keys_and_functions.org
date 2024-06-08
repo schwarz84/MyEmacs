@@ -27,7 +27,7 @@
    ;;; Code:
    
    ;; Configurar el undo normal
-   (global-set-key (kbd "C-z") 'undo)
+   ;(global-set-key (kbd "C-z") 'undo)
    ;; Copiar 
    (global-set-key (kbd "C-c c") 'clipboard-kill-ring-save)
    ;; Cortar
@@ -121,5 +121,86 @@
      ;; Asignar atajo de teclado para depurar la aplicación Dart
      (global-set-key (kbd "C-c D") 'debug-dart-application)    
      
+     ;; Función personalizada para desactivar multiple-cursors y otros modos con Escape
+    (defvar my/escape-count 0
+      "Cuenta el número de veces que se ha presionado Escape.")
+    
+    (defun my/reset-escape-count ()
+      "Restablece el contador de Escape."
+      (setq my/escape-count 0))
+    
+    (defun my/mc-quit-or-keyboard-quit ()
+      "Sale del modo multicursos si esta activo sino solo sale de todo."
+      (interactive)
+      (setq my/escape-count (1+ my/escape-count))
+      (if (>= my/escape-count 3)
+          (progn
+            (keyboard-quit)
+            (my/reset-escape-count))
+        (if (and (boundp 'multiple-cursors-mode) multiple-cursors-mode)
+            (mc/keyboard-quit)
+            (keyboard-escape-quit))
+          (when (company-tooltip-visible-p)
+            (company-abort))))
+    
+    (add-hook 'post-command-hook 'my/reset-escape-count)
+    
+    ;; Vincular la función personalizada a la tecla Escape
+    (global-set-key (kbd "<escape>") 'my/mc-quit-or-keyboard-quit)
+
+    ;; Definir la función para cerrar el buffer actual
+    (defun close-current-buffer ()
+      "Cierra el buffer actual."
+      (interactive)
+      (kill-buffer (current-buffer)))
+    
+    ;; Asignar la función a la combinación de teclas Alt + 4
+    (global-set-key (kbd "M-4") 'close-current-buffer)
+
+    ;; Función para mover la línea actual hacia arriba
+    (defun move-line-up ()
+      "Mueve la línea actual hacia arriba."
+      (interactive)
+      (transpose-lines 1)
+      (forward-line -2))
+    
+    ;; Función para mover la línea actual hacia abajo
+    (defun move-line-down ()
+      "Mueve la línea actual hacia abajo."
+      (interactive)
+      (forward-line 1)
+      (transpose-lines 1)
+      (forward-line -1))
+    
+    ;; Asignar atajos de teclado para mover líneas
+    (global-set-key (kbd "M-S-<up>") 'move-line-up)
+    (global-set-key (kbd "M-S-<down>") 'move-line-down)
+
+    ;; Desvincular `C-SPC` de `set-mark-command`
+    (global-unset-key (kbd "C-SPC"))
+    
+    ;; Vincular `C-S-SPC` a `set-mark-command`
+    (global-set-key (kbd "C-S-SPC") 'set-mark-command)
+
+    ;; Configurar `Ctrl+Space` para `company-complete`
+    (global-set-key (kbd "C-SPC") 'company-complete)
+
+    (defun my/open-line-above ()
+      "Open a new line above the current line."
+      (interactive)
+      (move-beginning-of-line nil)
+      (newline-and-indent)
+      (previous-line)
+      (indent-according-to-mode))
+
+    (defun my/open-line-below ()
+      "Open a new line below the current line."
+      (interactive)
+      (move-end-of-line nil)
+      (newline-and-indent))  
+
+    (global-set-key (kbd "C-<return>") 'my/open-line-below)
+    (global-set-key (kbd "C-S-<return>") 'my/open-line-above)  
+
    
   #+END_SRC

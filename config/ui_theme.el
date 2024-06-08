@@ -86,7 +86,8 @@
 
 ;; Configuración de ligatures
 (use-package ligature
-  :load-path "~/.emacs.d/config/ligature.el"
+  ;:load-path "~/.emacs.d/config/ligature.el"
+  :straight (ligature :type git :host github :repo "mickeynp/ligature.el")
   :config
   (ligature-set-ligatures 't '("www"))
   (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
@@ -113,18 +114,29 @@
   :config
   (load-theme 'jazz t))
 
-(whitespace-mode t)
-(global-whitespace-newline-mode t)
-
 (setq whitespace-display-mappings '((space-mark 32 [183] [46])
                                     (space-mark 160 [164] [95])
                                     (tab-mark 9 [187 9] [92 9])))
 
-(setq whitespace-style '(face trailing tabs spaces newline missing-newline-at-eof empty indentation space-after-tab space-before-tab space-mark tab-mark newline-mark))
+(setq whitespace-style '(face trailing tabs newline missing-newline-at-eof empty indentation space-after-tab space-before-tab space-mark tab-mark newline-mark))
+
+;; Activa `whitespace-mode` globalmente
+(global-whitespace-mode t)
+
+;; Activa `global-whitespace-newline-mode` globalmente
+(global-whitespace-newline-mode t)
+
+;; Configura los mapeos de visualización de caracteres
+(setq whitespace-display-mappings '((space-mark 32 [183] [46])
+                                    (space-mark 160 [164] [95])
+                                    (tab-mark 9 [187 9] [92 9])))
+
+;; Define los elementos de espacio en blanco a resaltar
+(setq whitespace-style '(face trailing tabs newline missing-newline-at-eof empty indentation space-after-tab space-before-tab space-mark tab-mark newline-mark))
 
 ;; Configurar las caras de whitespace para que siempre se vean blancos
 (custom-set-faces
- '(whitespace-space ((t (:background nil :foreground "white"))))
+ '(whitespace-space ((t (:background nil :foreground nil))))  ;; No resaltar espacios individuales
  '(whitespace-hspace ((t (:background nil :foreground "white"))))
  '(whitespace-tab ((t (:background nil :foreground "white"))))
  '(whitespace-newline ((t (:background nil :foreground "white"))))
@@ -135,7 +147,30 @@
  '(whitespace-empty ((t (:background nil :foreground "white"))))
  '(whitespace-space-after-tab ((t (:background nil :foreground "white")))))
 
+ ;; Instala el paquete hl-todo si no lo tienes
+ (package-install 'hl-todo)
+(require 'hl-todo)
 
+;; Activa hl-todo-mode globalmente
+(global-hl-todo-mode t)
+
+;; Añade una regla para ignorar los espacios en blanco dentro de los comentarios
+(setq hl-todo-keyword-faces '(("TODO" . "#FF0000")
+                              ("FIXME" . "#FF4500")
+                              ("DEBUG" . "#A020F0")
+                              ("HARDCODE" . "#FFD700")
+                              ("STUB" . "#1E90FF")
+                              ("NOTE" . "#FFD700")
+                              ("HACK" . "#A020F0")
+                              ("REVIEW" . "#FFD700")
+                              ("BUG" . "#FF6347")
+                              ("DEPRECATED" . "#FFD700")))
+
+;; Ajustar whitespace-mode para trabajar con hl-todo
+(add-hook 'prog-mode-hook
+          (lambda ()
+            (setq-local whitespace-space-regexp "\\(^[ \t]+\\|[ \t]+$\\)")
+            (whitespace-mode 1)))
 
 (defun my-compilation-mode-hook ()
   (setq truncate-lines nil) ;; becomes buffer local

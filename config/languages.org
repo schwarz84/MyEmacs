@@ -61,7 +61,8 @@
     :ensure t
     :after dart-mode
     :bind (:map dart-mode-map
-                ("C-M-x" . flutter-run-or-hot-reload))
+                ("C-c f h" . flutter-run-or-hot-reload)
+                ("C-c f r" . flutter-hot-restart))
     :custom
     (flutter-sdk-path "/home/Charly/fvm/versions/3.19.6"))  
 
@@ -95,7 +96,9 @@
   ;; LSP Mode
   (use-package lsp-mode
     :ensure t
-    :hook ((prog-mode . lsp) ; Activar en todos los modos de programación
+    :hook ((prog-mode . (lambda ()
+                          (unless (derived-mode-p 'emacs-lisp-mode)
+                            (lsp))))
            (lsp-mode . lsp-ui-mode))
     :commands lsp
     :config
