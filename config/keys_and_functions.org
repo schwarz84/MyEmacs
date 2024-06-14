@@ -53,7 +53,7 @@
    
    ;; Función para que se iluminen los pares de paréntesis cuando estoy dentro de ellos
    (define-advice show-paren-function (:around (fn) fix)
-     "Highlight enclosing parens."
+     "Resaltar parentesis"
      (cond ((looking-at "\\s(")(funcall fn))
            (t (save-excursion
                 (ignore-errors (backward-up-list))
@@ -64,11 +64,14 @@
    (global-set-key (kbd "M-<mouse-1>") 'mc/add-cursor-on-click)
    
    ;; Bookmark
-   (global-set-key (kbd "C-/") 'bookmark-set)
+   (global-set-key (kbd "C-c m s") 'bookmark-set)
+   (global-set-key (kbd "C-c m j") 'bookmark-jump)
+   (global-set-key (kbd "C-c m l") 'list-bookmarks)
+   (global-set-key (kbd "C-c m d") 'bookmark-delete)
 
    ;; Función para duplicar una línea de código
    (defun duplicate-line ()
-     "Duplicate the current line."
+     "Duplicar la linea."
      (interactive)
      (let ((line-contents (buffer-substring (line-beginning-position) (line-end-position))))
        (end-of-line)
@@ -80,7 +83,7 @@
 
    ;; Run Programa
    (defun run-dart-application ()
-    "Run Dart or Flutter application."
+    "Correr app de flutter"
     (interactive)
     (let ((default-directory (if (projectile-project-p)
                                  (projectile-project-root)
@@ -90,7 +93,7 @@
     (global-set-key (kbd "C-c r") 'run-dart-application)
 
     (defun run-dart-file ()
-     "Run the current Dart file."
+     "Correr archivo flutter."
      (interactive)
      (let ((default-directory (if (projectile-project-p)
                                   (projectile-project-root)
@@ -104,7 +107,7 @@
 
     ;; Configurar la depuración para Dart y Flutter
     (defun debug-dart-application ()
-      "Debug the current Dart file."
+      "Debug archivo dart"
       (interactive)
       (let ((default-directory (if (projectile-project-p)
                                    (projectile-project-root)
@@ -176,17 +179,8 @@
     (global-set-key (kbd "M-S-<up>") 'move-line-up)
     (global-set-key (kbd "M-S-<down>") 'move-line-down)
 
-    ;; Desvincular `C-SPC` de `set-mark-command`
-    (global-unset-key (kbd "C-SPC"))
-    
-    ;; Vincular `C-S-SPC` a `set-mark-command`
-    (global-set-key (kbd "C-S-SPC") 'set-mark-command)
-
-    ;; Configurar `Ctrl+Space` para `company-complete`
-    (global-set-key (kbd "C-SPC") 'company-complete)
-
     (defun my/open-line-above ()
-      "Open a new line above the current line."
+      "Abrir una linea arriba."
       (interactive)
       (move-beginning-of-line nil)
       (newline-and-indent)
@@ -194,7 +188,7 @@
       (indent-according-to-mode))
 
     (defun my/open-line-below ()
-      "Open a new line below the current line."
+      "Abrir una linea abajo."
       (interactive)
       (move-end-of-line nil)
       (newline-and-indent))  
@@ -202,5 +196,65 @@
     (global-set-key (kbd "C-<return>") 'my/open-line-below)
     (global-set-key (kbd "C-S-<return>") 'my/open-line-above)  
 
-   
+    (defun my-comment-block ()
+      "Insertar un blocke de comentarios segun buenas practicas."
+      (interactive)
+      (let ((current-line (thing-at-point 'line t)))
+        (if (string-match "^[ \t]*\\*" current-line)
+            (progn
+              (end-of-line)
+              (newline)
+              (insert (concat (match-string 0 current-line) " ")))
+          (insert "/*\n * \n */")
+          (forward-line -1)
+          (end-of-line))))
+    
+    (global-set-key (kbd "M-/") 'my-comment-block)
+
+    (defun my/inside-empty-brackets-or-braces-p ()
+      "Check if the point is inside empty brackets or braces on the same line."
+      (let ((start-pos (point)))
+        (save-excursion
+          (and (re-search-backward "[[({]" (line-beginning-position) t)
+               (progn (goto-char (match-end 0))
+                      (looking-at-p "[])}]"))
+               (= (1+ (match-beginning 0)) start-pos)))))
+    
+    (defun my/enter-inside-brackets-or-braces ()
+      "Execute a function if inside empty brackets or braces on the same line."
+      (interactive)
+      (if (my/inside-empty-brackets-or-braces-p)
+          (progn
+            (newline)
+            (my/open-line-above))
+        ;; Si no está dentro de corchetes o llaves vacíos, simplemente inserta un retorno de carro.
+        (newline)))
+    
+    (defun my/delete-opening-and-closing-brackets-or-braces ()
+      "Delete opening and closing brackets or braces if they are empty."
+      (interactive)
+      (if (my/inside-empty-brackets-or-braces-p)
+          (let ((start-pos (point)))
+            (save-excursion
+              (re-search-backward "[[({]" (line-beginning-position) t)
+              (delete-char 1))
+            (save-excursion
+              (goto-char start-pos)
+              (re-search-forward "[])}]" (line-end-position) t)
+              (delete-char -1)))
+        ;; Si no está dentro de corchetes o llaves vacíos, borra el carácter anterior normalmente.
+        (delete-char -1)))    
+    
+    ;; Asignar la nueva función a la tecla Enter
+    (global-set-key (kbd "RET") 'my/enter-inside-brackets-or-braces)
+    
+    ;; Asignar la nueva función a la tecla de retroceso
+    (global-set-key (kbd "DEL") 'my/delete-opening-and-closing-brackets-or-braces)
+
+    ;;Go to definitions
+    (global-set-key (kbd "C-c g") 'lsp-find-definition)
+
+    (provide 'keys_and_functions.el)
+    ;;; keys_and_functions.el ends here
+
   #+END_SRC

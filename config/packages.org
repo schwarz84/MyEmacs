@@ -161,7 +161,7 @@
     
     ;; Comentar líneas completas o seleccionadas.
     (use-package evil-nerd-commenter
-      :bind ("M-/" . my/comment-and-move-down))
+      :bind ("C-/" . my/comment-and-move-down))
 
     (defun my/comment-and-move-down ()
       "Commentar linea"
@@ -191,7 +191,9 @@
       :init
       (global-undo-tree-mode)
       :bind (("C-z" . undo-tree-undo)       ; Ctrl + z para deshacer
-             ("C-S-z" . undo-tree-redo)))   ; Ctrl + Shift + z para rehacer
+             ("C-S-z" . undo-tree-redo))    ; Ctrl + Shift + z para rehacer
+      :config
+      (define-key undo-tree-map (kbd "C-/") nil))  ; Desactivar C-/ ; Ctrl + Shift + z para rehacer
     
     ;; Borrar espacios en blanco.
     (use-package hungry-delete
@@ -275,7 +277,8 @@
                   ("s-p" . projectile-command-map)
                   ("C-c p" . projectile-command-map))
       :config
-      (setq projectile-project-search-path '("/home/Charly/proyectos/" "/home/Charly/sandbox/"))
+      (setq projectile-project-search-path '("/home/Charly/proyectos/" "/home/Charly/sandbox/")
+       projectile-completion-system 'helm)
       (setq projectile-enable-caching t)
       (setq projectile-indexing-method 'alien)
       (projectile-discover-projects-in-search-path))
@@ -305,7 +308,10 @@
     (use-package helm-rg
       :ensure t
       :config
-      (setq helm-rg-default-extra-args "--hidden"))
+       (setq helm-rg-default-directory 'git-root))
+
+    ;; Atajo de teclado para la función de búsqueda con vista previa
+    (global-set-key (kbd "C-c y") 'helm-rg)
 
     (use-package helm-ls-git
       :ensure t
@@ -313,16 +319,7 @@
 
     ;; Configura un atajo de teclado para abrir helm-ls-git
     (global-set-key (kbd "C-x C-g") 'helm-ls-git-ls)  
-    
-    ;; Función para buscar en todo el proyecto usando ripgrep y mostrar vista previa
-    (defun my/helm-projectile-rg-with-preview ()
-      "Buscar en todo el proyecto usando ripgrep y mostrar la vista previa."
-      (interactive)
-      (let ((default-directory (projectile-project-root)))
-        (helm-rg (read-string "Buscar: ") (projectile-project-root))))
-    
-    ;; Atajo de teclado para la función de búsqueda con vista previa
-    (global-set-key (kbd "C-c y") 'my/helm-projectile-rg-with-preview)
+  
     
     ;; Función para ignorar buffers no deseados en helm-projectile
     (defun my/helm-projectile-ignore-buffer (buffer)
@@ -335,51 +332,158 @@
     (setq helm-boring-buffer-regexp-list '("\\*.*\\*" "magit.*" "LSP.*"))
     
     ;; Asegúrate de tener instalados los paquetes necesarios
-    (use-package all-the-icons)
-    (use-package neotree
+    (use-package treemacs
+      :ensure t
+      :defer t
+      :init
+      ;; Configuración básica de Treemacs
+      (with-eval-after-load 'winum
+        (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
       :config
-      (setq neo-theme 'icons)
-      (setq neo-smart-open t)
-      (setq neo-vc-integration '(face))  ;; Agrega esta línea para resaltar archivos modificados
-      (global-set-key (kbd "C-M-1") 'neotree-find))
+      (progn
+        (setq treemacs-collapse-dirs                 (if treemacs-python-executable 3 0)
+              treemacs-deferred-git-apply-delay      0.5
+              treemacs-directory-name-transformer    #'identity
+              treemacs-display-in-side-window        t
+              treemacs-eldoc-display                 t
+              treemacs-file-event-delay              5000
+              treemacs-file-extension-regex          treemacs-last-period-regex-value
+              treemacs-git-command-pipe              ""
+              treemacs-goto-tag-strategy             'refetch-index
+              treemacs-indentation                   2
+              treemacs-indentation-string            " "
+              treemacs-is-never-other-window         nil
+              treemacs-max-git-entries               5000
+              treemacs-missing-project-action        'ask
+              treemacs-no-png-images                 nil
+              treemacs-no-delete-other-windows       t
+              treemacs-project-follow-cleanup        t
+              treemacs-persist-file                  (expand-file-name ".cache/treemacs-persist" user-emacs-directory)
+              treemacs-position                      'left
+              treemacs-read-string-input             'from-child-frame
+              treemacs-recenter-distance             0.1
+              treemacs-recenter-after-file-follow    nil
+              treemacs-recenter-after-tag-follow     nil
+              treemacs-show-cursor                   nil
+              treemacs-show-hidden-files             t
+              treemacs-silent-filewatch              nil
+              treemacs-silent-refresh                nil
+              treemacs-sorting                       'alphabetic-asc
+              treemacs-select-when-already-in-tree   t
+              treemacs-tag-follow-cleanup            t
+              treemacs-tag-follow-delay              1.5
+              treemacs-user-mode-line-format         nil
+              treemacs-user-header-line-format       nil
+              treemacs-width                         35)
     
-    (defun neotree-find-current-file ()
-      "Abre Neotree y selecciona el archivo actual."
-      (interactive)
-      (let ((current-file (buffer-file-name)))
-        (neotree-find current-file)))
+        ;; Resize icons to be smaller
+        (treemacs-resize-icons 16)  ;; Tamaño de los íconos en píxeles
     
-    ;; Asigna la función a la tecla C-M-1
-    (global-set-key (kbd "C-M-1") 'neotree-find-current-file)
+        (treemacs-follow-mode t)
+        (treemacs-filewatch-mode t)
+        (treemacs-fringe-indicator-mode 'always)
+        (pcase (cons (not (null (executable-find "git")))
+                     (not (null (executable-find "python3"))))
+          (`(t . t)
+           (treemacs-git-mode 'deferred))
+          (`(t . _)
+           (treemacs-git-mode 'simple))))
     
-    (defun neotree-projectile-action ()
-      "Abrir Neotree utilizando la raíz del proyecto con projectile."
-      (interactive)
+      (treemacs-hide-gitignored-files-mode nil)
+      
+      (defun my-treemacs-projectile-toggle ()
+        "Mostrar Treemacs basado en el estado que este."
+        (interactive)
+        (let ((treemacs-window (treemacs-get-local-window)))
+          (if treemacs-window
+              (if (eq (selected-window) treemacs-window)
+                  ;; Si estamos en la ventana de Treemacs, cerrarla
+                  (delete-window treemacs-window)
+                ;; Si Treemacs está abierto pero no en foco, mover el foco a Treemacs
+                (select-window treemacs-window))
+            ;; Si Treemacs está cerrado, abrirlo
+            (treemacs-projectile-toggle))))
+      
+      (global-set-key (kbd "M-1") #'my-treemacs-projectile-toggle)
+
+      (global-set-key (kbd "C-M-1") #'treemacs-select-window))
+    
+    (use-package treemacs-projectile
+      :after (treemacs projectile)
+      :ensure t
+      :config
+      ;; Función para abrir Treemacs utilizando la raíz del proyecto con projectile
+      (defun treemacs-projectile-toggle ()
+        "Abrir Treemacs utilizando la raíz del proyecto con Projectile."
+        (interactive)
         (let ((project-dir (projectile-project-root))
+              (project-name (projectile-project-name))
               (file-name (buffer-file-name)))
-          (neotree-toggle)
-          (if project-dir
-              (if (neo-global--window-exists-p)
+          (if (treemacs-is-treemacs-window-selected?)
+              (treemacs)
+            (progn
+              (treemacs)
+              (if project-dir
                   (progn
-                    (neotree-dir project-dir)
-                    (neotree-find file-name)))
-          (message "No estás en un proyecto reconocido por Projectile."))))
+                    (treemacs-add-and-display-project-at project-dir project-name)
+                    (treemacs-find-file file-name))
+                (message "No estás en un proyecto reconocido por Projectile.")))))))
     
-    (global-set-key (kbd "M-1") 'neotree-projectile-action)
+    (use-package treemacs-icons-dired
+      :after (treemacs dired)
+      :ensure t
+      :config (treemacs-icons-dired-mode))
     
-    (add-hook 'neotree-mode-hook
-              (lambda ()
-                (define-key neotree-mode-map (kbd "M-1") 'neotree-hide)
-                (setq-local neo-buffer--unlock-width nil)))
+    (use-package treemacs-magit
+      :after (treemacs magit)
+      :ensure t)
     
-    ;; Añade los iconos de all-the-icons para Neotree
     (use-package all-the-icons
+      :ensure t
       :if (display-graphic-p))
     
     ;; Instalación de los iconos (solo es necesario hacer esto una vez)
     ;; (all-the-icons-install-fonts)
     
+    ;; Hook para cambiar de workspace cuando se cambia de proyecto en Projectile
+    (add-hook 'projectile-after-switch-project-hook 'treemacs-projectile-toggle)
     
+(defun my-treemacs-display-current-project-exclusively ()
+  "Mostrar exclusivamente el proyecto actual en Treemacs si hay un archivo abierto y cerrar todos los buffers que no pertenecen al proyecto."
+  (interactive)
+  (let* ((current-buffer (current-buffer))
+         (project-root (treemacs--find-current-user-project)))
+    (when project-root
+      ;; Cerrar buffers que no pertenecen al proyecto actual
+      (dolist (buf (buffer-list))
+        (with-current-buffer buf
+          (unless (or (string-prefix-p project-root (or (buffer-file-name) ""))
+                      (not (buffer-file-name)))
+            (kill-buffer buf))))
+      ;; Mostrar exclusivamente el proyecto actual en Treemacs
+      (treemacs-display-current-project-exclusively)
+      (switch-to-buffer current-buffer))))
+
+;; Hook para ejecutar la función al iniciar Emacs
+(add-hook 'emacs-startup-hook 'my-treemacs-display-current-project-exclusively)
+
+(global-set-key (kbd "C-c t") 'my-treemacs-display-current-project-exclusively)
+
+
+    ;; Función para buscar archivos en el proyecto actual usando counsel-projectile-find-file
+    (defun my-treemacs-projectile-find-file ()
+      "Buscar archivos en el proyecto actual usando counsel-projectile-find-file."
+      (interactive)
+      (let ((project-root (projectile-project-root)))
+        (if project-root
+            (counsel-projectile-find-file)
+          (message "No estás en un proyecto reconocido por Projectile."))))
+    
+    ;; Asignar la tecla espacio para buscar archivos en Treemacs
+    (with-eval-after-load 'treemacs
+      (define-key treemacs-mode-map (kbd "SPC") 'my-treemacs-projectile-find-file))
+
+       
     ;; Configuración de backups y undo history.
     (defvar --backup-directory (concat user-emacs-directory "backups"))
     (unless (file-exists-p --backup-directory)
@@ -397,38 +501,13 @@
           auto-save-interval 200)
     
     (defvar --undo-history-directory (concat user-emacs-directory "undos/")
-      "Directory to save undo history files.")
+      "Directorio para guardar el historico de undos")
     (unless (file-exists-p --undo-history-directory)
       (make-directory --undo-history-directory t))
     (setq undo-tree-history-directory-alist `(("." . ,--undo-history-directory)))
     
     (setq backup-directory-alist `((".*" . ,temporary-file-directory)))
     (setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
-    
-    ;; Configuración de bookmarks
-    (use-package bm
-      :init
-      (setq bm-restore-repository-on-load t)
-      :config
-      (setq bm-cycle-all-buffers t)
-      (setq bm-repository-file "~/.emacs.d/bm-repository")
-      (setq-default bm-buffer-persistence t)
-      (add-hook 'after-init-hook 'bm-repository-load)
-      (add-hook 'kill-buffer-hook #'bm-buffer-save)
-      (add-hook 'kill-emacs-hook (lambda nil
-                                   (bm-buffer-save-all)
-                                   (bm-repository-save)))
-      (add-hook 'after-save-hook #'bm-buffer-save)
-      (add-hook 'find-file-hooks #'bm-buffer-restore)
-      (add-hook 'after-revert-hook #'bm-buffer-restore)
-      (add-hook 'vc-before-checkin-hook #'bm-buffer-save)
-      :bind (("C-<right>" . bm-next)
-             ("C-<left>" . bm-previous)
-             ("C-b" . bm-toggle)
-             ("C-a" . bm-show-all))
-      :custom-face
-      (bm-fringe-persistent-face ((t (:background "dark red" :foreground "smoke white"))))
-      (setq bm-highlight-style 'bm-highlight-only-fringe))
     
     ;; Multi cursor
     (use-package multiple-cursors
@@ -444,8 +523,10 @@
     
     ;; Ver cambios en los buffers.
     (use-package git-gutter
-      :init
-      (global-git-gutter-mode +1))
+      :ensure t
+      :hook (prog-mode . git-gutter-mode)
+      :config
+      (setq git-gutter:update-interval 2))
     
     ;; Emmet para autocompletar en HTML y CSS.
     (use-package emmet-mode
@@ -504,8 +585,6 @@
     (define-key company-active-map (kbd "<return>") nil)
     (define-key company-active-map (kbd "M-RET") 'company-complete-selection)  ;; Si quieres, puedes usar M-RET para seleccionar una sugerencia)
 
-
-
     ;; Personalizar el menú de autocompletado para que sea más amigable
     (use-package company-box
       :hook (company-mode . company-box-mode)
@@ -520,6 +599,75 @@
         (exec-path-from-shell-initialize)
         ;; Carga variables específicas del archivo .bashrc
         (exec-path-from-shell-copy-envs '("PATH" "ANDROID_HOME" "ANDROID_SDK_ROOT" "CHROME_EXECUTABLE"))))  
+
+    ;; Activar desktop-save-mode para guardar y restaurar la sesión
+    (use-package desktop
+      :ensure t
+      :init
+      (setq desktop-path '("~/.emacs.d/desktop/")
+            desktop-dirname "~/.emacs.d/desktop/"
+            desktop-base-file-name "emacs-desktop"
+            desktop-base-lock-name "lock"
+            desktop-restore-eager 10
+            desktop-restore-frames t
+            desktop-save t)
+      :config
+      ;; Crear el directorio si no existe
+      (unless (file-exists-p desktop-dirname)
+        (make-directory desktop-dirname t))
+      (desktop-save-mode 1))
+    
+    ;; Eliminar initial-buffer-choice si está configurado
+    (setq initial-buffer-choice nil)
+    
+    ;; Cerrar el buffer *scratch* al iniciar Emacs
+    (add-hook 'emacs-startup-hook (lambda () (kill-buffer "*scratch*")))
+
+    (use-package magit
+      :ensure t
+      :bind (("C-x g" . magit-status))
+      :config
+      (setq magit-save-repository-buffers 'dontask)
+      (setq magit-revert-buffers 'silent)
+      (setq magit-no-confirm '(stage-all-changes unstage-all-changes))
+      (setq magit-diff-refine-hunk 'all))
+
+    (use-package forge
+      :after magit)
+    
+    (use-package magit-todos
+      :after magit
+      :hook (magit-mode . magit-todos-mode))
+    
+    (use-package diff-hl
+      :ensure t
+      :hook ((prog-mode . diff-hl-mode)
+             (magit-post-refresh . diff-hl-magit-post-refresh)))
+
+    (use-package hide-mode-line
+     :ensure t
+     :config
+     (defgroup my-customizations nil
+       "Personalizacion para esconder el carret."
+       :group 'convenience)
+   
+    (defcustom my-hide-mouse-delay 1
+      "Demora en mostrar el carret de nuevo."
+      :type 'number
+      :group 'my-customizations)
+    
+    (defun my-hide-mouse-pointer ()
+      "Esconder el mouse cuando esctoy picando codigo."
+      (interactive)
+      (when (not (equal (current-buffer) (get-buffer "*Messages*")))
+        (hide-mode-line-mode 1)
+        (run-with-timer my-hide-mouse-delay nil 'show-mouse-pointer)))
+    
+    (defun show-mouse-pointer ()
+      "Mostrar el carret."
+      (interactive)
+      (hide-mode-line-mode -1))
+      (add-hook 'post-command-hook 'my-hide-mouse-pointer))
         
     (provide 'packages)
     ;;; packages.el ends here

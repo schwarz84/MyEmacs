@@ -215,7 +215,6 @@
     (setq inhibit-startup-screen t)
     (setq inhibit-startup-echo-area-message t)
     (setq initial-major-mode 'lisp-interaction-mode)
-    (setq initial-scratch-message nil)
 
     (delete-selection-mode 1)
         
